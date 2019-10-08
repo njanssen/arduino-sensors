@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+# Secrets
+credentials.h
+
+# Visual Studio Code
+.vscode
