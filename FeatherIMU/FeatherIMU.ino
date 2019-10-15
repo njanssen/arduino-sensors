@@ -2,6 +2,7 @@
 
 #include <WiFi101.h>
 #include <WiFiUdp.h>
+#include <OSCBundle.h>
 #include <OSCMessage.h>
 #include "credentials.h"
 #define OSC_PORT 9000
@@ -9,8 +10,13 @@ IPAddress osc_ip(255,255,255,255);
 WiFiUDP udp;
 int status;
 
-OSCMessage oscEuler("/ic/imu/bno055/euler");
-OSCMessage oscAccel("/ic/imu/bno055/accel");
+OSCBundle oscBundle;
+OSCMessage oscQuaternion("/ic/imu/quaternion");
+OSCMessage oscEuler("/ic/imu/euler");
+OSCMessage oscAccel("/ic/imu/accel");
+OSCMessage oscLinearAccel("/ic/imu/linearaccel");
+OSCMessage oscGyroscope("/ic/imu/gyroscope");
+OSCMessage oscMagnetometer("/ic/imu/magnetometer");
 
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
@@ -19,6 +25,9 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55);
 #define BNO055_SAMPLERATE_DELAY_MS (100) // 1Hz
 unsigned long currentMillis = 0;
 unsigned long previousBnoSampleMillis = 0;
+
+#define DEVICE_IDENTIFIER "FEATHER/CORE"
+#define IMU_IDENTIFIER "BNO"
 
 void setup() {
   Serial.begin(9600);
@@ -87,34 +96,74 @@ void loop() {
   currentMillis = millis();
   if (currentMillis - previousBnoSampleMillis >= BNO055_SAMPLERATE_DELAY_MS) {
     previousBnoSampleMillis = currentMillis;
-    // Time to check our BNO055 sensor
-    // Possible vector values can be:
-    // - VECTOR_ACCELEROMETER - m/s^2
-    // - VECTOR_MAGNETOMETER  - uT
-    // - VECTOR_GYROSCOPE     - rad/s
-    // - VECTOR_EULER         - degrees
-    // - VECTOR_LINEARACCEL   - m/s^2
-    // - VECTOR_GRAVITY       - m/s^2
+
+    oscBundle.empty();    
+
+    imu::Quaternion quat = bno.getQuat();
+    oscQuaternion
+      .empty()
+      .add(DEVICE_IDENTIFIER)
+      .add(IMU_IDENTIFIER)
+      .add(quat.x())      
+      .add(quat.w())
+      .add(quat.x())
+      .add(quat.y())
+      .add(quat.z());
+    oscBundle.add(oscQuaternion);
+    
     imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-//
-//    
-//    oscEuler.add(euler.x());
-//    oscEuler.add(euler.y());
-//    oscEuler.add(euler.z());
-//    udp.beginPacket(osc_ip, OSC_PORT);
-//    oscEuler.send(udp);
-//    udp.endPacket(); 
-//    oscEuler.empty(); 
+    oscEuler
+      .empty()
+      .add(DEVICE_IDENTIFIER)
+      .add(IMU_IDENTIFIER)
+      .add(euler.x())
+      .add(euler.y())
+      .add(euler.z());
+    oscBundle.add(oscEuler);  
+
+    imu::Vector<3> gyroscope = bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
+    oscGyroscope
+      .empty()
+      .add(DEVICE_IDENTIFIER)
+      .add(IMU_IDENTIFIER)
+      .add(gyroscope.x())
+      .add(gyroscope.y())
+      .add(gyroscope.z());
+    oscBundle.add(oscGyroscope);  
+
+    imu::Vector<3> magnetometer = bno.getVector(Adafruit_BNO055::VECTOR_MAGNETOMETER);
+    oscMagnetometer
+      .empty()
+      .add(DEVICE_IDENTIFIER)
+      .add(IMU_IDENTIFIER)
+      .add(magnetometer.x())
+      .add(magnetometer.y())
+      .add(magnetometer.z());
+    oscBundle.add(oscMagnetometer);  
+
+    imu::Vector<3> linearAccel = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
+    oscLinearAccel
+      .empty()  
+      .add(DEVICE_IDENTIFIER)
+      .add(IMU_IDENTIFIER)
+      .add(linearAccel.x())
+      .add(linearAccel.y())
+      .add(linearAccel.z());
+    oscBundle.add(oscLinearAccel);
 
     imu::Vector<3> accel = bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
-    oscAccel.empty();     
-    oscAccel.add(accel.x());
-    oscAccel.add(accel.y());
-    oscAccel.add(accel.z());
+    oscAccel
+      .empty() 
+      .add(DEVICE_IDENTIFIER)
+      .add(IMU_IDENTIFIER)
+      .add(accel.x())
+      .add(accel.y())
+      .add(accel.z());
+    oscBundle.add(oscAccel);
+    
     udp.beginPacket(osc_ip, OSC_PORT);
-    oscAccel.send(udp);
+    oscBundle.send(udp);
     udp.endPacket(); 
-
 
  #ifdef DEBUG
     //displayCalStatus();
