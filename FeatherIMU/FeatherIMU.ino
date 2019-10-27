@@ -22,7 +22,7 @@ OSCMessage oscMagnetometer("/ic/imu/magnetometer");
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
-#define BNO055_SAMPLERATE_DELAY_MS (100) // 1Hz
+#define BNO055_SAMPLERATE_DELAY_MS (10) // 100Hz
 unsigned long currentMillis = 0;
 unsigned long previousBnoSampleMillis = 0;
 
@@ -104,7 +104,6 @@ void loop() {
       .empty()
       .add(DEVICE_IDENTIFIER)
       .add(IMU_IDENTIFIER)
-      .add(quat.x())      
       .add(quat.w())
       .add(quat.x())
       .add(quat.y())
