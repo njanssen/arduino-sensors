@@ -5,6 +5,8 @@
 #include <OSCBundle.h>
 #include <OSCMessage.h>
 #include "credentials.h"
+#include "calibration.h"
+
 #define OSC_PORT 9000
 IPAddress osc_ip(255,255,255,255);
 WiFiUDP udp;
@@ -33,7 +35,7 @@ void setup() {
   Serial.begin(9600);
 
 #ifdef DEBUG
-  while (!Serial);
+  //while (!Serial);
 #endif
 
   if (!bno.begin()) {
@@ -43,17 +45,17 @@ void setup() {
 
   // Calibration data (@ home)
   adafruit_bno055_offsets_t calibrationData;
-  calibrationData.accel_offset_x = -28;
-  calibrationData.accel_offset_y = 27;
-  calibrationData.accel_offset_z = -35;
-  calibrationData.gyro_offset_x = -2;
-  calibrationData.gyro_offset_y = 1;
-  calibrationData.gyro_offset_z = 2;
-  calibrationData.mag_offset_z = -35;
-  calibrationData.mag_offset_x = -2;
-  calibrationData.mag_offset_y = 1;
-  calibrationData.accel_radius = 1000;
-  calibrationData.mag_radius = 759;  
+  calibrationData.accel_offset_x = CALIBRATION_ACCEL_OFFSET_X;
+  calibrationData.accel_offset_y = CALIBRATION_ACCEL_OFFSET_Y;
+  calibrationData.accel_offset_z = CALIBRATION_ACCEL_OFFSET_Z;
+  calibrationData.gyro_offset_x = CALIBRATION_GYRO_OFFSET_X;
+  calibrationData.gyro_offset_y = CALIBRATION_GYRO_OFFSET_Y;
+  calibrationData.gyro_offset_z = CALIBRATION_GYRO_OFFSET_Z;
+  calibrationData.mag_offset_z = CALIBRATION_MAG_OFFSET_Z;
+  calibrationData.mag_offset_x = CALIBRATION_MAG_OFFSET_X;
+  calibrationData.mag_offset_y = CALIBRATION_MAG_OFFSET_Y;
+  calibrationData.accel_radius = CALIBRATION_ACCEL_RADIUS;
+  calibrationData.mag_radius = CALIBRATION_MAG_RADIUS;  
  
   bno.setSensorOffsets(calibrationData);
   
