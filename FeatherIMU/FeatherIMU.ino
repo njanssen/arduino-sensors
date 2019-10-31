@@ -41,6 +41,23 @@ void setup() {
     while (true);
   }
 
+  // Calibration data (@ home)
+  adafruit_bno055_offsets_t calibrationData;
+  calibrationData.accel_offset_x = -28;
+  calibrationData.accel_offset_y = 27;
+  calibrationData.accel_offset_z = -35;
+  calibrationData.gyro_offset_x = -2;
+  calibrationData.gyro_offset_y = 1;
+  calibrationData.gyro_offset_z = 2;
+  calibrationData.mag_offset_z = -35;
+  calibrationData.mag_offset_x = -2;
+  calibrationData.mag_offset_y = 1;
+  calibrationData.accel_radius = 1000;
+  calibrationData.mag_radius = 759;  
+ 
+  bno.setSensorOffsets(calibrationData);
+  
+
 #ifdef DEBUG
   displaySensorDetails();
   displaySensorStatus();
@@ -89,7 +106,7 @@ void loop() {
 
     if (!oscMessage.hasError()) {
       // Message: /ic/connector/socket.io (sf) host:port      
-      oscMessage.route("/ic/connector/socket.io", oscDiscovery);
+      oscMessage.route("/ic/controller/socket.io", oscDiscovery);      
     }
   }
 
