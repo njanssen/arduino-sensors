@@ -19,17 +19,22 @@ OSCMessage oscAccel("/ic/imu/accel");
 OSCMessage oscLinearAccel("/ic/imu/linearaccel");
 OSCMessage oscGyroscope("/ic/imu/gyroscope");
 OSCMessage oscMagnetometer("/ic/imu/magnetometer");
+OSCMessage oscBreath("/ic/breath/resistance");
 
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
-#define BNO055_SAMPLERATE_DELAY_MS (10) // 100Hz
+#define SAMPLERATE_DELAY_MS (10) // 100Hz
 unsigned long currentMillis = 0;
-unsigned long previousBnoSampleMillis = 0;
+unsigned long previousSampleMillis = 0;
 
 #define DEVICE_IDENTIFIER "FEATHER/CORE"
 #define IMU_IDENTIFIER "BNO"
+
+// Stretch sensor
+#define BREATH_SERIESRESISTOR 10000
+#define BREATH_PIN A0
 
 void setup() {
   Serial.begin(9600);
@@ -113,8 +118,8 @@ void loop() {
   }
 
   currentMillis = millis();
-  if (currentMillis - previousBnoSampleMillis >= BNO055_SAMPLERATE_DELAY_MS) {
-    previousBnoSampleMillis = currentMillis;
+  if (currentMillis - previousSampleMillis >= SAMPLERATE_DELAY_MS) {
+    previousSampleMillis = currentMillis;
 
     oscBundle.empty();    
 
@@ -179,6 +184,20 @@ void loop() {
       .add(accel.z());
     oscBundle.add(oscAccel);
     
+    float breath;
+    breath = analogRead(BREATH_PIN);
+    
+    // convert the pin value to resistance
+    breath = (1023 / breath) - 1;    // (1023/ADC - 1)
+    breath = BREATH_SERIESRESISTOR / breath; // 10K / (1023/ADC - 1)
+
+    oscBreath
+      .empty() 
+      .add(DEVICE_IDENTIFIER)
+      .add(IMU_IDENTIFIER)
+      .add(breath);
+    oscBundle.add(oscBreath);
+
     udp.beginPacket(osc_ip, OSC_PORT);
     oscBundle.send(udp);
     udp.endPacket(); 
